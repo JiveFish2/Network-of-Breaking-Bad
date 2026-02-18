@@ -1,0 +1,10 @@
+.venv/
+bin/
+include/
+lib/
+share/
+etc/
+pyvenv.cfg
+.idea/
+.DS_Store
+src/.DS_Store
