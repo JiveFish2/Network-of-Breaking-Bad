@@ -1,0 +1,10 @@
+pandas
+numpy
+spacy
+networkx
+matplotlib
+pyvis
+selenium
+webdriver-manager
+jupyter
+ipykernel

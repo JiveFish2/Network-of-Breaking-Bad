@@ -1,10 +1,14 @@
 .venv/
 bin/
 include/
-lib/
 share/
 etc/
 pyvenv.cfg
 .idea/
 .DS_Store
 src/.DS_Store
+lib/bindings/
+lib/tom-select/
+lib/vis-9.1.2/
+lib/**/.DS_Store
+lib/**/__pycache__/
