@@ -50,6 +50,10 @@ jupyter notebook
 2. Run `character_scraping.ipynb` to generate/update character data.
 3. Run `extracting_relationships.ipynb` to build and visualize relationship graphs.
 
+## Character Graph
+
+![Breaking Bad character graph](assets/character-graph.png)
+
 ## Notes
 
 - Relationship extraction expects `.txt` files in `data/`.
