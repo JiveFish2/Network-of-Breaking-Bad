@@ -18,19 +18,18 @@ This project analyzes relationships between Breaking Bad characters using web sc
 ## Status
 
 Implemented:
-- Character scraping notebook for Breaking Bad character source pages.
-- Relationship extraction notebook using spaCy + NetworkX.
-- Utility functions for NER processing and relationship graph edge creation.
+- Character scraping notebook (now uses the MediaWiki API directly; no Selenium / browser needed).
+- Relationship extraction notebook using spaCy + NetworkX, with alias-aware entity resolution.
+- Utility functions for NER, alias normalization, character-list cleanup, and relationship graph edges.
 
 Planned:
-- Improve entity normalization (aliases, duplicate names, nicknames).
+- Expand the alias map in `lib/utils/functions.py` (currently covers the show's main cast).
 - Expand and clean episode/script coverage in `data/`.
 - Improve visualization outputs and centrality/community analysis reporting.
 
 ## Requirements
 
 - Python 3.10+
-- Chrome installed (for Selenium runs in the scraping notebook)
 
 Install dependencies:
 
@@ -52,7 +51,9 @@ jupyter notebook
 
 ## Character Graph
 
-![Breaking Bad character graph](assets/character-graph.png)
+![Breaking Bad character graph](character-graph.png)
+
+Built from all 62 episode transcripts with a 5-sentence co-occurrence window: **89 characters, 236 relationships** (average degree 5.3). Node size is degree, colour is the Louvain community, edge thickness is how often the pair co-occurs. The render follows the look of the original Witcher network image (pyvis, dark `#222222` background, white labels); it frames the 87-character main component, so the isolated Fernando–Sandor pair sits off-frame. Regenerate it with `python make_character_graph.py`. A run that lands far from those counts means something upstream changed — see `CLAUDE.md`.
 
 ## Notes
 
@@ -73,6 +74,10 @@ jupyter notebook
 ## Known Limitations
 
 - NER is based on `en_core_web_sm`, which can miss entities or merge/split names incorrectly.
-- Character matching currently relies on exact name/first-name heuristics.
+- Character matching uses an alias map plus full-name / unique-firstname matching; ambiguous shared firstnames (e.g. multiple "Lucy" entries) are intentionally not auto-attributed.
 - Relationship strength is proximity-based (windowed co-occurrence), not semantic interaction detection.
 - Results depend heavily on transcript quality and consistency.
+
+## Change History
+
+Notable in-place changes are tagged with `# === [YYYY-MM-DD FIX <n>] ===` markers in source files. Grep for the date to find each block. The 2026-04-28 pass covered: MediaWiki API rewrite of the scraper (Cloudflare workaround), character-list cleanup, alias normalization, and notebook hygiene fixes.

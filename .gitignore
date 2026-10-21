@@ -1,0 +1,24 @@
+# [2026-04-28] Initial gitignore — added during repo cleanup
+# OS / editor cruft
+.DS_Store
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+# bin/ is the local virtualenv (has activate, ipython, etc.); project source lives in lib/, not bin/
+bin/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated artefacts from extracting_relationships.ipynb
+# [2026-04-28] breaking.html is the legacy filename (pre-FIX-9); the renamed outputs are below
+breaking.html
+breaking_basic.html
+breaking_communities.html
+# [2026-08-10] intermediate pyvis render that make_character_graph.py screenshots
+_graph_render.html

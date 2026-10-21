@@ -4,7 +4,15 @@ spacy
 networkx
 matplotlib
 pyvis
+# [2026-04-28] python-louvain provides the `community` module imported by extracting_relationships.ipynb
+python-louvain
+# [2026-04-28] requests added for MediaWiki API scraping (Cloudflare workaround)
+requests
+# [2026-08-10] selenium is used again — make_character_graph.py drives headless Chrome to
+# print-screen the pyvis render. Selenium >= 4.6 fetches chromedriver itself, so
+# webdriver-manager is only still here for the pre-API scraper cell in character_scraping.ipynb.
 selenium
 webdriver-manager
+# [2026-10-21] pillow removed -- make_character_graph.py no longer trims the screenshot
 jupyter
 ipykernel
