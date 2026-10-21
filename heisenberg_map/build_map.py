@@ -18,7 +18,9 @@ Inputs (all in heisenberg_map/):
                      the blame (direct / ordered / indirect / none / self).
                      Facts from the Breaking Bad Wiki's "List of Character
                      Deaths" (CC BY-SA); the walt_role column is our call.
-    template.html    The page; build injects the data as JSON. It draws the
+    episodes.csv     One plain sentence per episode, written for this project
+                     (not copied from any synopsis), shown on the episode card.
+    template.html    The page body; build injects the data as JSON. It draws the
                      network with vis-network (the library pyvis uses in the
                      notebook), copied from lib/vis-9.1.2 next to the output.
 
@@ -29,13 +31,16 @@ same scene" is measured the same way from the pilot to the finale. The dataset's
 dialogue text is encrypted; this map only needs speakers and scene boundaries.
 
 Usage (from the repo root):
-    python heisenberg_map/build_map.py
+    python heisenberg_map/build_map.py                    # docs/index.html
+    python heisenberg_map/build_map.py --cdn out.html       # also a copy that
+                                                          # loads vis-network from a CDN
 """
 
 import bisect
 import csv
 import hashlib
 import json
+import argparse
 import os
 import shutil
 import urllib.request
@@ -50,6 +55,8 @@ SOURCE = os.path.join(HERE, "source", "bb.json")
 SOURCE_URL = "https://ndownloader.figshare.com/files/21635694"
 SOURCE_SHA256 = "7e4794f0b2d60a6e764fcf26eea2eeb5b2efa12a2ebd399b39cf874c5b155286"
 OUT = os.path.join(ROOT, "docs", "index.html")
+# vis-network for the --cdn build, a page fragment that loads it from a CDN.
+VIS_CDN = "https://unpkg.com/vis-network@9.1.2/standalone/umd/vis-network.min.js"
 
 WALT = "Walter White"
 LOUVAIN_SEED = 42
@@ -91,7 +98,25 @@ def scenes_by_episode(dataset):
     return episodes
 
 
+def symbol_for(node, used):
+    """Two-letter element symbol: first + last initial (Jesse Pinkman -> Jp), else the
+    first two letters (Badger -> Ba); falls back to other letters on a clash."""
+    words = [w for w in node["label"].replace("'", "").replace(".", "").split() if w[0].isalpha()]
+    first, rest = words[0], "".join(words[1:])
+    candidates = [first[0] + rest[0]] if rest else []
+    candidates += [first[0] + c for c in (first[1:] + rest)]
+    for cand in candidates:
+        sym = cand[0].upper() + cand[1].lower()
+        if sym not in used:
+            used.add(sym)
+            return sym
+    return first[:2].title()
+
+
 def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--cdn", help="also write a page fragment that loads vis-network from a CDN to this path")
+    args = ap.parse_args()
     dataset = load_source()
     characters = read_csv("characters.csv")
     deaths = read_csv("deaths.csv")
@@ -178,8 +203,30 @@ def main():
             "rationale": d["rationale"],
         })
 
+    # Periodic-table touches for the element card: a two-letter symbol and an
+    # "atomic number" = order of first appearance (ties broken by scenes spoken).
+    order = sorted(nodes, key=lambda n: (n["first"], -sum(n["presence"].values()), n["id"]))
+    used = set()
+    for z, n in enumerate(order, start=1):
+        n["z"] = z
+        n["symbol"] = symbol_for(n, used)
+
+    # Name each community after its two busiest members, for the legend.
+    talk = Counter({n["id"]: sum(n["presence"].values()) for n in nodes})
+    group_names = {}
+    for g in sorted(set(groups.values())):
+        top = sorted((n for n in nodes if n["group"] == g and n["id"] != WALT), key=lambda n: -talk[n["id"]])[:2]
+        short = lambda n: "Walt Jr." if n["id"] == "Walter White Jr." else n["label"].split()[0]
+        group_names[g] = " & ".join(short(n) for n in top)
+
+    lines = {r["code"]: r["line"] for r in read_csv("episodes.csv")}
+    missing = [c for c in codes if c not in lines]
+    if missing:
+        raise SystemExit(f"episodes.csv: no line for {missing}")
+
     data = {
-        "episodes": [{"code": c, "title": t} for c, t, _ in episodes],
+        "episodes": [{"code": c, "title": t, "line": lines[c]} for c, t, _ in episodes],
+        "groupNames": group_names,
         "nodes": nodes,
         "edges": edges,
         "deaths": death_rows,
@@ -188,14 +235,23 @@ def main():
     }
 
     with open(os.path.join(HERE, "template.html"), encoding="utf-8") as fh:
-        page = fh.read()
-    page = page.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+        body = fh.read().replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+
+    # docs/: a full document loading vis-network from next to itself (offline, GitHub Pages).
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as fh:
-        fh.write(page)
-    # The page loads vis-network from next to itself, so it works offline and on GitHub Pages.
-    for name in ("vis-network.min.js", "vis-network.css"):
-        shutil.copy(os.path.join(ROOT, "lib", "vis-9.1.2", name), os.path.join(os.path.dirname(OUT), name))
+        fh.write('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+                 '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+                 + body.replace("__VIS_SRC__", "vis-network.min.js") + "\n</html>\n")
+    shutil.copy(os.path.join(ROOT, "lib", "vis-9.1.2", "vis-network.min.js"), os.path.dirname(OUT))
+    stale_css = os.path.join(os.path.dirname(OUT), "vis-network.css")
+    if os.path.exists(stale_css):
+        os.remove(stale_css)  # the page styles vis's tooltip itself
+    if args.cdn:
+        # A fragment: whoever embeds it supplies the document skeleton.
+        with open(args.cdn, "w", encoding="utf-8") as fh:
+            fh.write(body.replace("__VIS_SRC__", VIS_CDN))
+        print(f"wrote {args.cdn}")
 
     counted = Counter()
     for d in death_rows:
