@@ -26,3 +26,6 @@ _graph_render.html
 # [2026-10-21] Episode transcripts from transcripts.foreverdreaming.org. The site forbids
 # republishing without written permission, so they stay local and out of the repo.
 data/
+
+# [2026-10-21] Serial Speakers dataset (CC BY 4.0); build_map.py downloads it and checks its SHA256
+heisenberg_map/source/

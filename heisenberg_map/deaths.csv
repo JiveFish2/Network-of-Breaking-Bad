@@ -1,0 +1,48 @@
+episode,character,victims,walt_role,cause,responsible,rationale
+1x01,Emilio Koyama,1,direct,Poisoned with phosphine gas in the RV,Walter White,Walt made the gas and locked him in.
+1x03,Domingo Molina,1,direct,Strangled with a bike lock,Walter White,Walt killed him himself.
+2x01,Gonzo,1,none,Bled out after a car crushed his arm in a junkyard,Himself (accidentally),Accident while hiding No-Doze's body for Tuco.
+2x02,Tuco Salamanca,1,indirect,Shot by Hank in a shootout,Hank Schrader,Hank tracked Jesse's car to the place where Tuco held Walt and Jesse; Walt had been planning to poison Tuco.
+2x06,Spooge,1,none,Head crushed with an ATM,Spooge's Lady,No connection to Walt.
+2x11,"Christian ""Combo"" Ortega",1,none,Shot for dealing on rival territory,"Tomás Cantillo, on orders from the Rival Dealers",Killed selling Walt and Jesse's product; the wiki does not hold Walt responsible.
+2x12,Jane Margolis,1,indirect,Choked on her vomit during a heroin overdose,"Herself, via being inadvertently flipped onto her back by Walter White",Walt watched her choke and chose not to help.
+2x13,,167,indirect,Wayfarer 515 and JM 21 mid-air collision,Donald Margolis (by extension of Walter White's actions),Jane's father caused the crash while grieving her; 167 passengers.
+3x08,Juan Bolsa,1,none,Shot by Mexican federales,"Mexican federales, via manipulation by Gustavo Fring",Gus's move against the cartel.
+3x12,,2,direct,Run over and shot,Walter White,Walt killed the two rival dealers to save Jesse.
+3x13,Gale Boetticher,1,ordered,Shot in the face,"Jesse Pinkman, on orders from Walter White",Walt ordered Jesse to kill him.
+4x01,Victor,1,none,Throat slit with a box cutter,Gustavo Fring,Gus's decision.
+4x10,Cesar,1,none,Poisoned tequila,Gustavo Fring,Gus's massacre of the cartel.
+4x10,Cisco,1,none,Poisoned tequila,Gustavo Fring,Gus's massacre of the cartel.
+4x10,Luis,1,none,Poisoned tequila,Gustavo Fring,Gus's massacre of the cartel.
+4x10,Renaldo,1,none,Poisoned tequila,Gustavo Fring,Gus's massacre of the cartel.
+4x10,Joaquin Salamanca,1,none,Shot during the escape from Don Eladio's estate,Jesse Pinkman,Jesse acting for Gus.
+4x13,Hector Salamanca,1,direct,Suicide bombing with a bomb on his wheelchair,Himself (with assistance from Walter White),Walt built and planted the bomb.
+4x13,Gustavo Fring,1,direct,Blown up by Hector's wheelchair bomb,Hector Salamanca (with assistance from Walter White),Walt planned the hit and built the bomb.
+4x13,Tyrus Kitt,1,direct,Blown up by Hector's wheelchair bomb,Hector Salamanca (with assistance from Walter White),Collateral of Walt's bomb.
+4x13,,2,direct,Shot at the superlab,Walter White,Walt shot two superlab guards to free Jesse.
+5x02,Peter Schuler,1,none,Suicide by defibrillator,Himself,Fallout of the DEA's investigation into Gus.
+5x02,Duane Chow,1,none,Shot,Chris Mara on orders from Lydia Rodarte-Quayle,Lydia cleaning up Gus's network.
+5x05,Drew Sharp,1,indirect,Shot by Todd,Todd Alquist,Killed during Walt's train heist; Walt didn't order it.
+5x07,Mike Ehrmantraut,1,direct,Shot in the gut and bled out,Walter White,Walt killed him himself.
+5x08,Dan Wachsberger,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,Ron Forenall,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,Anthony Perez,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,Dennis Markowski,1,ordered,Burned alive in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,Andrew Holt,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,Jack McGann,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,Isaac Conley,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,Harris Boivin,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,Raymond Martinez,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x08,William Moniz,1,ordered,Stabbed in prison,"Jack Welker's gang, contracted by Walter White",One of the ten prison hits Walt paid for.
+5x14,Hank Schrader,1,indirect,Executed after a shootout,Jack Welker,Walt brought Jack's gang to the meeting place.
+5x14,Steven Gomez,1,indirect,Shot in the shootout,Jack Welker and his gang,Walt brought Jack's gang to the meeting place.
+5x15,Andrea Cantillo,1,indirect,Shot in the head,Todd Alquist,Killed to punish Jesse after Walt handed him over to Jack's gang.
+5x16,Jack Welker,1,direct,Shot by Walt's M60 and then in the head,Walter White,Walt's revenge.
+5x16,Kenny,1,direct,Shot by Walt's remote-controlled M60,Walter White,Walt's revenge.
+5x16,Frankie,1,direct,Shot by Walt's remote-controlled M60,Walter White,Walt's revenge.
+5x16,Lester,1,direct,Shot by Walt's remote-controlled M60,Walter White,Walt's revenge.
+5x16,Matt,1,direct,Shot by Walt's remote-controlled M60,Walter White,Walt's revenge.
+5x16,,2,direct,Shot by Walt's remote-controlled M60,Walter White,The other two members of Jack's gang.
+5x16,Todd Alquist,1,indirect,Strangled with handcuff chains,Jesse Pinkman,Jesse killed him during Walt's raid on the compound.
+5x16,Lydia Rodarte-Quayle,1,direct,Poisoned with ricin,Walter White,Walt put ricin in her stevia.
+5x16,Walter White,1,self,Hit by a ricochet from his own M60,Himself (accidentally),Heisenberg's own end.

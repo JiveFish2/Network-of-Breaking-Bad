@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heisenberg's Map of Destruction</title>
+<meta name="description" content="Episode by episode: Walter White's world turning criminal, and everyone who died because of him.">
+<link rel="stylesheet" href="vis-network.css">
+<script src="vis-network.min.js"></script>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --canvas: #222222;
+    --panel: #262626;
+    --line: #363636;
+    --text: #e8e6df;
+    --muted: #9a9a9a;
+    --family: #5aa9e6;
+    --law: #e6b33c;
+    --crime: #4cc26b;
+    --other: #9aa0a6;
+    --death: #e5484d;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  header { padding: 22px 24px 8px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .elements { display: flex; gap: 4px; }
+  .el { width: 46px; height: 46px; border: 2px solid var(--crime); background: #173b22; color: #fff;
+    display: grid; place-items: center; font-weight: 700; font-size: 22px; position: relative; }
+  .el small { position: absolute; top: 2px; right: 4px; font-size: 9px; font-weight: 500; opacity: .8; }
+  h1 { font-size: 24px; margin: 0; letter-spacing: .2px; }
+  header p { margin: 2px 0 0; color: var(--muted); max-width: 720px; }
+
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; padding: 8px 24px 16px; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; padding: 8px 16px 16px; } header { padding: 18px 16px 6px; } }
+
+  .stage { background: var(--canvas); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  #map { width: 100%; height: max(520px, calc(100vh - 190px)); }
+  .hint { position: absolute; margin: 10px 12px; font-size: 12px; color: var(--muted); pointer-events: none; }
+
+  .controls { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; background: var(--panel); }
+  .controls button { background: #303030; color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+    height: 34px; min-width: 38px; font-size: 15px; cursor: pointer; }
+  .controls button:hover { border-color: var(--crime); }
+  .slider { flex: 1; min-width: 200px; }
+  .slider input { width: 100%; accent-color: var(--crime); }
+  .ticks { position: relative; height: 16px; font-size: 11px; color: var(--muted); }
+  .ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .ep-label { min-width: 210px; font-variant-numeric: tabular-nums; }
+  .ep-label b { color: var(--crime); }
+
+  aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card h2 { margin: 0 0 8px; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .big { font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big.red { color: var(--death); }
+  .sub { color: var(--muted); font-size: 13px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); }
+  .chip.direct { border-color: var(--death); }
+  .chip.ordered { border-color: #f08a4b; }
+  .chip.indirect { border-color: #b98ae6; }
+  #share-chart { width: 100%; height: 120px; display: block; margin-top: 8px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: 13px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .log { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow: auto; }
+  .log li { padding: 7px 4px; border-top: 1px solid var(--line); font-size: 13px; }
+  .log li:first-child { border-top: 0; }
+  .log li.now { background: rgba(229, 72, 77, .1); }
+  .log .who { font-weight: 600; }
+  .log .ep { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 6px; }
+  .log .role { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-left: 6px; }
+  .role.direct { color: var(--death); } .role.ordered { color: #f08a4b; } .role.indirect { color: #b98ae6; }
+  .role.none, .role.self { color: var(--muted); }
+  .empty { color: var(--muted); font-size: 13px; }
+
+  /* vis.js tooltip */
+  div.vis-tooltip { background: #111 !important; color: var(--text) !important; border: 1px solid var(--line) !important;
+    border-radius: 8px !important; padding: 8px 10px !important; font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    max-width: 280px; white-space: normal !important; }
+  .vis-tooltip b { display: block; margin-bottom: 2px; }
+
+  footer { padding: 4px 24px 28px; color: var(--muted); font-size: 12.5px; max-width: 1100px; }
+  footer a { color: var(--muted); }
+  @media (max-width: 980px) { footer { padding: 4px 16px 24px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="elements" aria-hidden="true"><div class="el"><small>35</small>Br</div><div class="el"><small>56</small>Ba</div></div>
+  <div>
+    <h1>Heisenberg's Map of Destruction</h1>
+    <p>Episode by episode: who Walter White shares scenes with, the world they belong to, and everyone who dies because of him.</p>
+  </div>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="hint">Drag the characters, scroll to zoom, drag the background to pan.</div>
+    <div id="map" role="img" aria-label="Network of Walter White's scene partners"></div>
+    <div class="controls">
+      <button id="prev" title="Previous episode (←)">‹</button>
+      <button id="play" title="Play / pause (space)">▶</button>
+      <button id="next" title="Next episode (→)">›</button>
+      <button id="fit" title="Fit the network on screen">⤢</button>
+      <div class="slider">
+        <input id="ep" type="range" min="0" value="0" aria-label="Episode">
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <div class="ep-label" id="ep-label"></div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h2>Walter → Heisenberg</h2>
+      <div class="big" id="crime-share">–</div>
+      <div class="sub">of Walt's scene partners are criminals (last 8 episodes)</div>
+      <svg id="share-chart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
+      <div class="legend" style="margin-top:8px">
+        <span><i style="background:var(--crime)"></i>Crime</span>
+        <span><i style="background:var(--family)"></i>Family</span>
+        <span><i style="background:var(--law)"></i>Law</span>
+        <span><i style="background:var(--other)"></i>Other</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Who's who</h2>
+      <div class="legend" id="whos-who"></div>
+      <div class="sub" style="margin-top:8px">Everyone else takes their community's colour, as in the notebook graph; grey = never speaks on screen.</div>
+    </div>
+
+    <div class="card">
+      <h2>Body count</h2>
+      <div class="big red" id="body-count">0</div>
+      <div class="sub">deaths Walt is responsible for, so far</div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="card">
+      <h2>Deaths so far</h2>
+      <ul class="log" id="log"></ul>
+    </div>
+  </aside>
+</main>
+
+<footer>
+  <p><b>How to read it.</b> Each dot is a character; it grows with the number of scenes they have spoken in. The main characters wear
+  their colour from the show's wardrobe palette (Walt white, then Blue Sky blue as Heisenberg; the dangerous ones darkened); everyone else
+  takes their Louvain community's colour. Lines join characters who speak in the same scene (thicker = more scenes).
+  The "Walter → Heisenberg" chart groups his scene partners by world: family, law, crime, other.
+  ✝ marks the dead. A red dashed line from Walt means he is responsible: <span class="role direct">direct</span> (he killed them),
+  <span class="role ordered">ordered</span> (he had them killed) or <span class="role indirect">indirect</span> (they died as a consequence of his choices).
+  Use ← → or space to move through the episodes.</p>
+  <p><b>Sources.</b> Character colours follow the <a href="https://breakingbad.fandom.com/wiki/Colors">Breaking Bad Wiki's colour analysis</a>, adapted. Speakers and scenes: <a href="https://figshare.com/articles/TV_Series_Corpus/3471839">Serial Speakers</a>
+  (X. Bost, V. Labatut, G. Linares, <a href="https://hal.archives-ouvertes.fr/hal-02477736">LREC 2020</a>), CC BY 4.0.
+  Deaths: <a href="https://breakingbad.fandom.com/wiki/List_of_Character_Deaths">Breaking Bad Wiki, List of Character Deaths</a>, CC BY-SA;
+  the direct / ordered / indirect classification is this project's own judgement.
+  Network drawn with <a href="https://visjs.github.io/vis-network/">vis-network</a>. Part of
+  <a href="https://github.com/JiveFish2/Network-of-Breaking-Bad">Network of Breaking Bad</a>.</p>
+</footer>
+
+<script>
+const DATA = /*__DATA__*/null;
+const EPS = DATA.episodes, N = EPS.length;
+const COLORS = { family: "#5aa9e6", law: "#e6b33c", crime: "#4cc26b", other: "#9aa0a6" };
+const DEAD = "#3a3a3a", RED = "#e5484d", EDGE = "#6b6b6b", NOGROUP = { background: "#7d7d7d", border: "#a8a8a8" };
+// vis-network's default group palette (the community colours of the notebook graph), minus its
+// red, which would read as a death here. Groups come largest first, so the crime world around
+// Jesse gets the meth yellow.
+const GROUP_COLORS = [
+  { background: "#FFFF00", border: "#FFA500" }, { background: "#97C2FC", border: "#2B7CE9" },
+  { background: "#7BE141", border: "#41A906" },
+  { background: "#EB7DF4", border: "#E129F0" }, { background: "#AD85E4", border: "#7C29F0" },
+  { background: "#FFA807", border: "#C37F00" }, { background: "#6E6EFD", border: "#4220FB" },
+  { background: "#FFC0CB", border: "#FD5A8A" }, { background: "#C2FABC", border: "#4AD63A" },
+];
+// Walt is white until he becomes Heisenberg, then the blue of his Blue Sky meth.
+const WALT_COLORS = { background: "#f4f4f0", border: "#ffffff" }, HEIS_COLORS = { background: "#48c9f5", border: "#d6f6ff" };
+
+// A node's own colours: signature colour, else its community's, else neutral grey.
+function baseColors(n, i) {
+  if (n.id === WALT) return i >= DATA.heisenbergFrom ? HEIS_COLORS : WALT_COLORS;
+  if (n.color) return { background: n.color, border: n.border || n.color };
+  return n.group !== null && n.group !== undefined ? GROUP_COLORS[n.group % GROUP_COLORS.length] : NOGROUP;
+}
+// Colour for lines touching n: dark (dangerous) characters lend their bright border instead.
+function lineColor(n, i) {
+  const c = baseColors(n, i), hex = c.background.replace("#", "");
+  const lum = (0.299 * parseInt(hex.slice(0, 2), 16) + 0.587 * parseInt(hex.slice(2, 4), 16) + 0.114 * parseInt(hex.slice(4, 6), 16)) / 255;
+  return lum < 0.3 ? c.border : c.background;
+}
+const BLAMED = new Set(["direct", "ordered", "indirect"]);
+const ROLE_LABEL = { direct: "killed by Walt", ordered: "ordered by Walt", indirect: "because of Walt", none: "", self: "" };
+const WINDOW = 8;
+
+const byId = Object.fromEntries(DATA.nodes.map(n => [n.id, n]));
+const WALT = DATA.walt, walt = byId[WALT];
+
+// ---------- cumulative series ----------
+for (const n of DATA.nodes) {
+  n.cum = new Array(N).fill(0);
+  let run = 0;
+  for (let i = 0; i < N; i++) { run += n.presence[i] || 0; n.cum[i] = run; }
+}
+const pairKey = (a, b) => a < b ? a + "|" + b : b + "|" + a;
+const pairs = new Map();
+const waltByEp = Array.from({ length: N }, () => ({ family: 0, law: 0, crime: 0, other: 0 }));
+for (const [i, a, b, w] of DATA.edges) {
+  const key = pairKey(a, b);
+  if (!pairs.has(key)) pairs.set(key, { a, b, inc: new Array(N).fill(0) });
+  pairs.get(key).inc[i] += w;
+  if (a === WALT || b === WALT) waltByEp[i][byId[a === WALT ? b : a].faction] += w;
+}
+for (const p of pairs.values()) {
+  p.cum = new Array(N); let run = 0;
+  for (let i = 0; i < N; i++) { run += p.inc[i]; p.cum[i] = run; }
+}
+const shares = waltByEp.map((_, i) => {
+  const acc = { family: 0, law: 0, crime: 0, other: 0 };
+  for (let j = Math.max(0, i - WINDOW + 1); j <= i; j++) for (const f in acc) acc[f] += waltByEp[j][f];
+  const t = Object.values(acc).reduce((s, v) => s + v, 0) || 1;
+  for (const f in acc) acc[f] /= t;
+  return acc;
+});
+
+// ---------- vis network ----------
+const nodes = new vis.DataSet(), edges = new vis.DataSet();
+const network = new vis.Network(document.getElementById("map"), { nodes, edges }, {
+  // pyvis / notebook defaults: barnesHut physics, dynamic curved edges.
+  nodes: { shape: "dot", font: { color: "#ffffff", size: 14, strokeWidth: 3, strokeColor: "#222222" }, borderWidth: 1.5 },
+  edges: { smooth: { type: "dynamic" }, color: { inherit: false } },
+  physics: { barnesHut: { gravitationalConstant: -4500, centralGravity: 0.45, springLength: 110, springConstant: 0.04, damping: 0.3, avoidOverlap: 0.25 },
+             stabilization: { iterations: 250 } },
+  interaction: { hover: true, tooltipDelay: 120, dragNodes: true, zoomView: true, dragView: true },
+});
+
+function tooltip(n, i) {
+  const div = document.createElement("div");
+  const death = DATA.deaths.find(d => d.id === n.id);
+  let html = `<b>${n.label}</b>`;
+  if (!n.collective) {
+    html += `<div class="sub">${n.id === WALT ? "" : n.faction + " · "}first seen ${EPS[n.first].code}</div>`;
+    html += `<div>${n.cum[i]} scenes speaking so far</div>`;
+    if (n.id !== WALT) html += `<div>${pairs.get(pairKey(n.id, WALT))?.cum[i] || 0} scenes with Walt</div>`;
+  }
+  if (death && death.ep <= i) html += `<div style="margin-top:4px"><span class="role ${death.role}">✝ ${EPS[death.ep].code}</span> ${death.cause}.</div>`;
+  if (n.note) html += `<div class="sub" style="margin-top:4px">${n.note}</div>`;
+  div.innerHTML = html;
+  return div;
+}
+
+function nodeStyle(n, i) {
+  const dead = n.death !== null && n.death <= i;
+  const blamed = dead && BLAMED.has(n.role);
+  const heis = i >= DATA.heisenbergFrom;
+  const own = baseColors(n, i);
+  let size, label = n.label, color = own.background, border = own.border, fontSize = 14;
+  if (n.id === WALT) {
+    size = 38; fontSize = 22;
+    label = dead ? "✝ Walter White" : heis ? "Heisenberg" : "Walter White";
+    if (dead) { color = DEAD; border = HEIS_COLORS.background; }
+  } else if (n.collective) {
+    size = Math.min(10 + Math.sqrt(n.collective) * 2.2, 36);
+    color = DEAD; border = RED; label = "✝ " + n.label;
+  } else {
+    size = 7 + Math.sqrt(n.cum[i]) * 1.6;
+    if (dead) { color = DEAD; border = blamed ? RED : lineColor(n, i); label = "✝ " + n.label; }
+    if (n.cum[i] < 6 && !blamed && n.death !== i && n.first !== i) label = undefined; // minor characters: name on hover
+  }
+  const highlight = n.first === i && i > 0 && !n.collective ? "#ffffff" : n.death === i ? RED : border;
+  return {
+    id: n.id, label, size, title: tooltip(n, i),
+    borderWidth: n.id === WALT ? 4 : blamed || n.death === i || (n.first === i && i > 0) ? 3.5 : 1.5,
+    color: { background: color, border: highlight, highlight: { background: color, border: "#ffffff" }, hover: { background: color, border: "#ffffff" } },
+    font: { size: fontSize, color: dead ? "#bdbdbd" : "#ffffff", strokeWidth: 3, strokeColor: "#222222" },
+    mass: n.id === WALT ? 4 : 1 + Math.sqrt(n.cum[i]) / 6,
+  };
+}
+
+let shownNodes = new Set();
+const positionOf = id => shownNodes.has(id) ? network.getPosition(id) : { x: 0, y: 0 };
+function syncNetwork(i) {
+  // Nodes: add arrivals next to someone they already know, update everyone, drop future characters.
+  const want = new Set(DATA.nodes.filter(n => n.first <= i).map(n => n.id));
+  for (const id of shownNodes) if (!want.has(id)) nodes.remove(id);
+  const updates = [];
+  for (const id of want) {
+    const n = byId[id], style = nodeStyle(n, i);
+    if (!shownNodes.has(id)) {
+      const anchor = DATA.edges.find(([e, a, b]) => e <= i && (a === id || b === id) && shownNodes.has(a === id ? b : a));
+      const near = anchor ? positionOf(anchor[1] === id ? anchor[2] : anchor[1]) : positionOf(WALT);
+      Object.assign(style, id === WALT ? { x: 0, y: 0 }
+        : { x: near.x + (Math.random() - .5) * 160, y: near.y + (Math.random() - .5) * 160 });
+    }
+    updates.push(style);
+  }
+  nodes.update(updates);
+  shownNodes = want;
+
+  // Edges: cumulative shared scenes; Walt's take the other side's colour.
+  const edgeUpdates = [], keep = new Set();
+  for (const [key, p] of pairs) {
+    const w = p.cum[i];
+    if (!w || !want.has(p.a) || !want.has(p.b)) continue;
+    const isWalt = p.a === WALT || p.b === WALT;
+    const other = byId[p.a === WALT ? p.b : p.a];
+    const fresh = p.inc[i] > 0;
+    keep.add(key);
+    edgeUpdates.push({
+      id: key, from: p.a, to: p.b,
+      width: Math.min(0.6 + Math.sqrt(w) * (isWalt ? 0.8 : 0.5), 12),
+      color: isWalt ? { color: lineColor(other, i), opacity: fresh ? 0.95 : 0.6 }
+                    : { color: lineColor(byId[p.a], i), opacity: fresh ? 0.45 : 0.16 },
+      title: `${byId[p.a].label} & ${byId[p.b].label}: ${w} shared scene${w > 1 ? "s" : ""}`,
+    });
+  }
+  // Death links: red dashes from Walt to everyone he is responsible for. They only pull on the
+  // layout for victims who never shared a scene with anyone (the prison hits, the collective
+  // nodes); without that spring nothing holds them and repulsion flings them off screen.
+  const linked = new Set(edgeUpdates.flatMap(e => [e.from, e.to]));
+  for (const n of DATA.nodes) {
+    if (n.death === null || n.death > i || !BLAMED.has(n.role)) continue;
+    const key = "death|" + n.id;
+    keep.add(key);
+    edgeUpdates.push({ id: key, from: WALT, to: n.id, dashes: [6, 6], physics: !linked.has(n.id), length: 260,
+      smooth: { type: "curvedCW", roundness: .15 },
+      width: n.role === "direct" ? 2.2 : 1.4, color: { color: RED, opacity: n.death === i ? 1 : 0.55 },
+      title: `${n.label}: ${ROLE_LABEL[n.role]}` });
+  }
+  edges.remove(edges.getIds().filter(id => !keep.has(id)));
+  edges.update(edgeUpdates);
+}
+
+// ---------- panel ----------
+function renderShare(i) {
+  document.getElementById("crime-share").textContent = Math.round(shares[i].crime * 100) + "%";
+  const chart = document.getElementById("share-chart"), NS = "http://www.w3.org/2000/svg";
+  chart.replaceChildren();
+  const W = 300, H = 120, x = k => k / (N - 1) * W;
+  const add = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); chart.appendChild(e); };
+  const base = new Array(N).fill(0);
+  for (const f of ["crime", "family", "law", "other"]) {
+    const top = shares.map((sh, k) => base[k] + sh[f]);
+    let d = `M0,${H - top[0] * H}`;
+    for (let k = 1; k < N; k++) d += ` L${x(k)},${H - top[k] * H}`;
+    for (let k = N - 1; k >= 0; k--) d += ` L${x(k)},${H - base[k] * H}`;
+    add("path", { d: d + "Z", fill: COLORS[f], opacity: f === "crime" ? .9 : .55 });
+    for (let k = 0; k < N; k++) base[k] = top[k];
+  }
+  EPS.forEach((e, k) => { if (e.code.endsWith("x01") && k) add("line", { x1: x(k), x2: x(k), y1: 0, y2: H, stroke: "#222", "stroke-width": 1 }); });
+  add("line", { x1: x(i), x2: x(i), y1: 0, y2: H, stroke: "#fff", "stroke-width": 2 });
+}
+
+function renderDeaths(i) {
+  const rows = DATA.deaths.filter(d => d.ep <= i);
+  const totals = { direct: 0, ordered: 0, indirect: 0 };
+  for (const d of rows) if (d.role in totals) totals[d.role] += d.victims;
+  document.getElementById("body-count").textContent = totals.direct + totals.ordered + totals.indirect;
+  document.getElementById("chips").innerHTML = ["direct", "ordered", "indirect"]
+    .map(r => `<span class="chip ${r}">${totals[r]} ${r}</span>`).join("");
+  const log = document.getElementById("log");
+  if (!rows.length) { log.innerHTML = `<li class="empty">No one yet.</li>`; return; }
+  log.innerHTML = rows.slice().reverse().map(d => {
+    const node = d.id ? byId[d.id] : null;
+    const who = node ? node.label : d.name;
+    const count = d.victims > 1 && !(node && node.collective) ? ` (${d.victims})` : "";
+    return `<li class="${d.ep === i ? "now" : ""}"><span class="ep">${EPS[d.ep].code}</span>` +
+      `<span class="who">${who}${count}</span><span class="role ${d.role}">${ROLE_LABEL[d.role]}</span>` +
+      `<div class="sub">${d.cause}. ${BLAMED.has(d.role) ? d.rationale : ""}</div></li>`;
+  }).join("");
+}
+
+// ---------- controls ----------
+const slider = document.getElementById("ep");
+slider.max = N - 1;
+EPS.forEach((e, i) => {
+  if (!e.code.endsWith("x01")) return;
+  const s = document.createElement("span");
+  s.style.left = (i / (N - 1) * 100) + "%";
+  s.textContent = "S" + e.code[0];
+  document.getElementById("ticks").appendChild(s);
+});
+
+let cur = 0, timer = null;
+function set(i) {
+  cur = Math.max(0, Math.min(N - 1, i));
+  slider.value = cur;
+  const ep = EPS[cur];
+  document.getElementById("ep-label").innerHTML = `<b>S${ep.code[0]} · E${ep.code.slice(2)}</b> — ${ep.title}`;
+  syncNetwork(cur);
+  autoFit();
+  renderShare(cur);
+  renderDeaths(cur);
+}
+slider.addEventListener("input", () => { stop(); set(+slider.value); });
+document.getElementById("prev").onclick = () => { stop(); set(cur - 1); };
+document.getElementById("next").onclick = () => { stop(); set(cur + 1); };
+// The camera follows the network until the viewer zooms or pans; ⤢ hands control back.
+let userView = false, fitTimer = null;
+network.on("zoom", () => { userView = true; });
+network.on("dragEnd", p => { if (!p.nodes.length) userView = true; });
+function autoFit(delay = 700) {
+  if (userView) return;
+  clearTimeout(fitTimer);
+  fitTimer = setTimeout(() => network.fit({ animation: { duration: 700, easingFunction: "easeInOutQuad" } }), delay);
+}
+document.getElementById("fit").onclick = () => { userView = false; autoFit(0); };
+const playBtn = document.getElementById("play");
+function stop() { clearInterval(timer); timer = null; playBtn.textContent = "▶"; }
+playBtn.onclick = () => {
+  if (timer) return stop();
+  if (cur === N - 1) set(0);
+  playBtn.textContent = "❚❚";
+  timer = setInterval(() => { if (cur >= N - 1) return stop(); set(cur + 1); }, 1400);
+};
+document.addEventListener("keydown", ev => {
+  if (ev.target.tagName === "INPUT" && ev.key !== " ") return;
+  if (ev.key === "ArrowRight") { stop(); set(cur + 1); ev.preventDefault(); }
+  else if (ev.key === "ArrowLeft") { stop(); set(cur - 1); ev.preventDefault(); }
+  else if (ev.key === " ") { playBtn.click(); ev.preventDefault(); }
+});
+
+document.getElementById("whos-who").innerHTML = [
+  ["Walter White", WALT_COLORS], ["Heisenberg", HEIS_COLORS],
+  ...DATA.nodes.filter(n => n.color && n.id !== WALT && !/^(Kenny|Frankie|Lester|Matt|Tyrus Kitt|Leonel Salamanca)$/.test(n.id))
+    .map(n => [n.id === "Jack Welker" ? "Jack's gang" : n.id === "Victor" ? "Victor & Tyrus" : n.label, { background: n.color, border: n.border }]),
+].map(([name, c]) => `<span><i style="background:${c.background};box-shadow:0 0 0 2px ${c.border}"></i>${name}</span>`).join("");
+
+set(0);
+network.once("stabilizationIterationsDone", () => network.fit());
+network.on("stabilized", () => autoFit(0));
+</script>
+</body>
+</html>
