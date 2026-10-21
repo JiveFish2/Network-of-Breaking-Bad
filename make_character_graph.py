@@ -30,11 +30,9 @@ is painted #222222 before the screenshot.
 Graph source: `breaking_communities.html`, which the notebook writes and which
 embeds the full node/edge list. Reading it back avoids re-running spaCy NER
 over all 62 transcripts just to redraw. Community groups are taken from that
-file when present; otherwise they're recomputed with Louvain (--seed). Note
-that the copy currently in this folder was saved before the notebook's
-`set_node_attributes(G, communities, 'group')` cell ran, so it carries no
-groups and this script recomputes them -- the sibling copy in
-`../Network of Breaking Bad OLD/` does have them.
+file when present; otherwise they're recomputed with Louvain (--seed). A copy
+saved before the notebook's `set_node_attributes(G, communities, 'group')` cell
+ran carries no groups, so this script recomputes them.
 
 vis.js physics is force-directed and unseeded, so every run produces a
 *different layout* of the same graph. Louvain is seeded so at least the

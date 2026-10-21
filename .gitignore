@@ -9,7 +9,7 @@ __pycache__/
 *.pyo
 .venv/
 venv/
-# bin/ is the local virtualenv (has activate, ipython, etc.); project source lives in lib/, not bin/
+# bin/ was the old local virtualenv, replaced by .venv/ on 2026-10-21; kept ignored in case one lingers
 bin/
 
 # Jupyter
