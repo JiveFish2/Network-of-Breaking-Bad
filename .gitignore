@@ -22,3 +22,7 @@ breaking_basic.html
 breaking_communities.html
 # [2026-08-10] intermediate pyvis render that make_character_graph.py screenshots
 _graph_render.html
+
+# [2026-10-21] Episode transcripts from transcripts.foreverdreaming.org. The site forbids
+# republishing without written permission, so they stay local and out of the repo.
+data/
