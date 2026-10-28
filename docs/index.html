@@ -12,13 +12,13 @@
 <style>
   /* Layout: the network fills the screen; a lab-instrument HUD floats over it
      (brand + tools on top, episode card + timeline at the bottom, drawers at the sides).
-     Single deliberate dark look: a meth lab at night. */
+     Single deliberate dark look: the notebook graph's #222 grey, nudged faintly toward lab green. */
   :root {
     color-scheme: dark;
-    --bg: #0c110f;
-    --surface: rgba(13, 19, 17, .88);
-    --surface-solid: #111815;
-    --line: #26332d;
+    --bg: #202321;
+    --surface: rgba(27, 31, 29, .9);
+    --surface-solid: #1b1f1d;
+    --line: #353d38;
     --ink: #e7ede8;
     --muted: #8da197;
     --tile: #12301f;
@@ -42,7 +42,7 @@
   :focus-visible { outline: 2px solid var(--hazmat); outline-offset: 2px; }
 
   #app { position: fixed; inset: 0; }
-  #map { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, #13201a 0%, var(--bg) 70%); }
+  #map { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, #262b27 0%, var(--bg) 72%); }
 
   .hud { position: absolute; z-index: 5; }
   .glass { background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
@@ -131,7 +131,7 @@
   .fact.idx { border-color: rgba(72, 201, 245, .5); color: var(--bluesky); }
 
   .player { display: flex; gap: 10px; align-items: center; padding: 8px 10px; }
-  .pbtn { flex: none; width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--line); background: #18221e; cursor: pointer; font: 600 15px/1 var(--mono); }
+  .pbtn { flex: none; width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-solid); cursor: pointer; font: 600 15px/1 var(--mono); }
   .pbtn:hover { border-color: var(--hazmat); }
   .pbtn.play { width: 44px; background: var(--hazmat); color: var(--bg); border-color: var(--hazmat); }
   .track { position: relative; flex: 1; min-width: 0; height: 58px; cursor: pointer; touch-action: none; }
@@ -140,7 +140,7 @@
 
   /* ---------- intro ---------- */
   .intro { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 24px var(--gutter-r) 24px var(--gutter); overflow: auto;
-    background: rgba(8, 12, 10, .72); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+    background: rgba(20, 23, 21, .74); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
   .intro .panel { max-width: 560px; padding: 26px 28px; display: grid; gap: 14px; }
   .intro .tile { width: 58px; height: 58px; font-size: 28px; }
   .intro h2 { margin: 0; font: 800 40px/1 var(--display); font-stretch: 72%; text-transform: uppercase; text-wrap: balance; }
@@ -259,6 +259,17 @@ const GROUP_COLORS = [
   { background: "#6E6EFD", border: "#4220FB" }, { background: "#FFC0CB", border: "#FD5A8A" },
 ];
 const WALT_COLORS = { background: "#f4f4f0", border: "#ffffff" }, HEIS_COLORS = { background: BLUESKY, border: "#d6f6ff" };
+// The dead are drawn as skulls: red when Walt is to blame, grey when he isn't, Heisenberg blue for Walt.
+const SKULL_GREY = "#a9b1ad";
+const skullCache = {};
+function skull(fill) {
+  return skullCache[fill] ??= "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+    `<path d="M32 3C16.5 3 6 13.5 6 28c0 8.3 4.2 14.6 10 17.8V54c0 3.3 2.7 6 6 6h20c3.3 0 6-2.7 6-6v-8.2C53.8 42.6 58 36.3 58 28 58 13.5 47.5 3 32 3z" fill="${fill}" stroke="#202321" stroke-width="2"/>` +
+    `<ellipse cx="21.5" cy="29" rx="7" ry="7.5" fill="#202321"/><ellipse cx="42.5" cy="29" rx="7" ry="7.5" fill="#202321"/>` +
+    `<path d="M32 36.5l-4.5 8h9z" fill="#202321"/>` +
+    `<path d="M25 50.5v8M32 50.5v8M39 50.5v8" stroke="#202321" stroke-width="2.6" stroke-linecap="round"/></svg>`);
+}
 const WINDOW = 8;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = id => document.getElementById(id);
@@ -311,7 +322,7 @@ let shownNodes = new Set(), hoverId = null;
 // ---------- vis network ----------
 const nodes = new vis.DataSet(), edges = new vis.DataSet();
 const network = new vis.Network($("map"), { nodes, edges }, {
-  nodes: { shape: "dot", font: { face: "Archivo, Arial Narrow, sans-serif", color: "#ffffff", size: 15, strokeWidth: 4, strokeColor: "#0c110f" }, borderWidth: 1.5 },
+  nodes: { shape: "dot", font: { face: "Archivo, Arial Narrow, sans-serif", color: "#ffffff", size: 15, strokeWidth: 4, strokeColor: "#202321" }, borderWidth: 1.5 },
   edges: { smooth: { type: "dynamic" }, color: { inherit: false }, selectionWidth: 0, hoverWidth: 0 },
   physics: { barnesHut: { gravitationalConstant: -4500, centralGravity: 0.45, springLength: 110, springConstant: 0.04, damping: 0.3, avoidOverlap: 0.25 },
              stabilization: { iterations: 250 } },
@@ -333,22 +344,24 @@ function nodeStyle(n, i) {
   const blamed = dead && BLAMED.has(n.role);
   const own = baseColors(n, i);
   let label = n.label, color = own.background, border = own.border, size, fontSize = 15;
+  let image = null;
   if (n.id === WALT) {
     size = 40; fontSize = 24;
-    label = dead ? "✝ Walter White" : i >= DATA.heisenbergFrom ? "Heisenberg" : "Walter White";
-    if (dead) { color = DEAD; border = BLUESKY; }
+    label = dead ? "Walter White" : i >= DATA.heisenbergFrom ? "Heisenberg" : "Walter White";
+    if (dead) image = skull(BLUESKY);
   } else if (n.collective) {
-    size = Math.min(10 + Math.sqrt(n.collective) * 2.2, 36); color = DEAD; border = RED; label = "✝ " + n.label; fontSize = 13;
+    size = Math.min(12 + Math.sqrt(n.collective) * 2.2, 36); fontSize = 13; image = skull(RED);
   } else {
     size = 7 + Math.sqrt(n.cum[i]) * 1.6;
     if (n.color) fontSize = 17;
-    if (dead) { color = DEAD; border = blamed ? RED : lineColor(n, i); label = "✝ " + n.label; }
+    if (dead) { image = skull(blamed ? RED : SKULL_GREY); size = Math.max(size * 1.15, 13); }
   }
   const debut = n.first === i && i > 0 && !n.collective;
   const ring = debut ? "#ffffff" : n.death === i ? RED : border;
   const dim = focusId && n.id !== focusId && !neighbours.get(focusId).has(n.id);
   return {
     id: n.id, size, label: isLabelled(n, i) ? label : undefined,
+    shape: image ? "image" : "dot", image: image || undefined,
     title: `${n.symbol} · ${n.label}`,
     borderWidth: n.id === WALT ? 4 : (blamed || n.death === i || debut) ? 3.5 : 1.5,
     color: { background: color, border: ring, highlight: { background: color, border: "#ffffff" }, hover: { background: color, border: "#ffffff" } },
@@ -513,14 +526,14 @@ function drawTimeline() {
   const add = (tag, attrs, text) => { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text) e.textContent = text; svg.appendChild(e); return e; };
   const bw = W / N, x = k => (k + .5) * bw, base = H - 12, top = 14;
   add("defs", {}).innerHTML = `<linearGradient id="wave" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${BLUESKY}" stop-opacity=".55"/><stop offset="1" stop-color="${BLUESKY}" stop-opacity=".05"/></linearGradient>`;
-  add("rect", { x: 0, y: top, width: W, height: base - top, fill: "#0f1714" });
+  add("rect", { x: 0, y: top, width: W, height: base - top, fill: "#181c1a" });
   // Heisenberg wave: crime share of Walt's scene partners.
   let d = `M0,${base} L0,${base - shares[0].crime * (base - top)}`;
   shares.forEach((s, k) => { d += ` L${x(k)},${base - s.crime * (base - top)}`; });
   d += ` L${W},${base - shares[N - 1].crime * (base - top)} L${W},${base}Z`;
   add("path", { d, fill: "url(#wave)", stroke: BLUESKY, "stroke-width": 1.2, "stroke-opacity": .8 });
   // Episodes still ahead are dimmed.
-  add("rect", { x: x(cur), y: top, width: Math.max(0, W - x(cur)), height: base - top, fill: "#0c110f", opacity: .55 });
+  add("rect", { x: x(cur), y: top, width: Math.max(0, W - x(cur)), height: base - top, fill: "#202321", opacity: .55 });
   EPS.forEach((e, k) => {
     if (!e.code.endsWith("x01")) return;
     if (k) add("line", { x1: k * bw, x2: k * bw, y1: top - 2, y2: H, stroke: "#3a4a42", "stroke-width": 1 });
